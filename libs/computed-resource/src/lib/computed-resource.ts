@@ -14,7 +14,7 @@ const resB = resource({
   loader: () => Promise.resolve(2),
 });
 
-const map: ResourceMap = {
+const map = {
   a: resA,
   b: resB,
 };
@@ -35,7 +35,7 @@ export function computedResource(resources: ResourceMap) {
 
     // create a computed value for each of the resources in the map
     for (const [key, resource] of Object.entries(resources)) {
-      type VAL = typeof resource extends Resource<infer VAL> ? VAL : never;
+      type VAL = typeof resource extends Resource<infer V> ? V : unknown;
       result[key] = resource.value() as VAL;
     }
 
@@ -54,3 +54,31 @@ const check: { a: string | undefined; b: number | undefined } =
   computedResource(map).value();
 
 console.log(check);
+
+function extractResourceValues<T extends ResourceMap>(
+  resources: T
+): {
+  value: () => { [K in keyof T]: T[K] extends Resource<infer V> ? V : never };
+} {
+  const values: Partial<{
+    [K in keyof T]: T[K] extends Resource<infer V> ? V : never;
+  }> = {};
+
+  for (const [key, resource] of Object.entries(resources)) {
+    values[key as keyof T] = resource.value() as T[keyof T] extends Resource<
+      infer V
+    >
+      ? V
+      : never;
+  }
+
+  return {
+    value: () =>
+      values as {
+        [K in keyof T]: T[K] extends Resource<infer V> ? V : never;
+      },
+  };
+}
+const check2 = extractResourceValues(map).value();
+
+console.log(check2);
