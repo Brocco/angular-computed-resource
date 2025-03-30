@@ -24,6 +24,7 @@ export default [
           style: 'kebab-case',
         },
       ],
+      '@angular-eslint/component-class-suffix': ['off', {}],
     },
   },
   {
